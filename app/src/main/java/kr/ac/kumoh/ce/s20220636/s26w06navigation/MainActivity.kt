@@ -99,6 +99,7 @@ fun PokemonListScreen(
     }
 }
 
+
 @Composable
 fun PokemonDetailScreen(
     pokemonId: Int,
