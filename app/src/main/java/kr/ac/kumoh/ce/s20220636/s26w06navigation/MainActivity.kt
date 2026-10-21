@@ -13,6 +13,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -23,34 +24,34 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import kotlinx.serialization.Serializable
+import kr.ac.kumoh.ce.s20220636.s26w06navigation.navigation.PokemonRoute
+import kr.ac.kumoh.ce.s20220636.s26w06navigation.repository.MockPokemonRepository
+import kr.ac.kumoh.ce.s20220636.s26w06navigation.repository.PokemonRepository
+import kr.ac.kumoh.ce.s20220636.s26w06navigation.ui.screen.PokemonDetailScreen
+import kr.ac.kumoh.ce.s20220636.s26w06navigation.ui.screen.PokemonListScreen
 import kr.ac.kumoh.ce.s20220636.s26w06navigation.ui.theme.S26W06NavigationTheme
 import kr.ac.kumoh.ce.s20220636.s26w06navigation.viewmodel.PokemonDetailViewModel
 import kr.ac.kumoh.ce.s20220636.s26w06navigation.viewmodel.PokemonListViewModel
-
-
-sealed interface PokemonRoute : NavKey {
-    @Serializable
-    data object PokemonList : PokemonRoute
-
-    @Serializable
-    data class PokemonDetail(val pokemonId: Int) : PokemonRoute
-}
-
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        val repository: PokemonRepository = MockPokemonRepository()
+
         setContent {
             S26W06NavigationTheme {
-                MainScreen()
+                MainScreen(repository)
             }
         }
     }
 }
 
 @Composable
-fun MainScreen() {
+fun MainScreen(
+    repository: PokemonRepository
+) {
     val backStack = rememberNavBackStack(PokemonRoute.PokemonList)
 
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
@@ -68,49 +69,19 @@ fun MainScreen() {
             entryProvider = entryProvider {
                 entry<PokemonRoute.PokemonList> {
                     PokemonListScreen(
-                        //pokemonList = pokemons,
+                        repository = repository,
                         onNavigateToDetail = { id ->
                             backStack.add(PokemonRoute.PokemonDetail(pokemonId = id))
                         }
                     )
                 }
                 entry<PokemonRoute.PokemonDetail> { key ->
-                    PokemonDetailScreen(key.pokemonId)
+                    PokemonDetailScreen(
+                        pokemonId = key.pokemonId,
+                        repository = repository,
+                    )
                 }
             }
         )
     }
-}
-
-@Composable
-fun PokemonListScreen(
-//    pokemonList: List<Pokemon>,
-    onNavigateToDetail: (Int) -> Unit,
-    viewModel: PokemonListViewModel = viewModel() // 이런거 대문자가 아니라 소문자로 써야함
-) {
-    val pokemonList by viewModel.pokemonList.collectAsStateWithLifecycle()
-
-    LazyColumn {
-        items(pokemonList) { pokemon ->
-            Button(
-                onClick = {
-                    onNavigateToDetail(pokemon.id)
-                }
-            ) {
-                Text(pokemon.name)
-            }
-        }
-    }
-}
-
-@Composable
-fun PokemonDetailScreen(
-    pokemonId: Int,
-    viewModel: PokemonDetailViewModel = viewModel {
-        PokemonDetailViewModel(pokemonId)
-    },
-) {
-    val pokemon by viewModel.pokemon.collectAsStateWithLifecycle()
-
-    Text(pokemon.name)
 }

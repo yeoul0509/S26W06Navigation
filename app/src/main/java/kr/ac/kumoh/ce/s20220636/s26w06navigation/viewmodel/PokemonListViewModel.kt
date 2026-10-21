@@ -1,9 +1,12 @@
 package kr.ac.kumoh.ce.s20220636.s26w06navigation.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kr.ac.kumoh.ce.s20220636.s26w06navigation.model.Pokemon
+import kr.ac.kumoh.ce.s20220636.s26w06navigation.repository.PokemonRepository
 
 private val pokemons = listOf(
     Pokemon(1, "이상해씨", "풀/독", "태어날 때부터 등에 식물의 씨앗이 있어 조금씩 자란다."),
@@ -12,14 +15,17 @@ private val pokemons = listOf(
     Pokemon(25, "피카츄", "전기", "뺨에 전기 주머니가 있어서 위기에 처하면 전기를 방출한다.")
 )
 
-class PokemonListViewModel : ViewModel() {
+class PokemonListViewModel(
+    private val repository: PokemonRepository
+) : ViewModel() {
     private val _pokemonList = MutableStateFlow<List<Pokemon>>(pokemons)
     val pokemonList = _pokemonList.asStateFlow()
-}
 
-class PokemonDetailViewModel : ViewModel() {
-    fun getPokemonById(id: Int): Pokemon? {
-        return pokemons.find { it.id == id }
+    init {
+        viewModelScope.launch { // 왜씀? reposity에 suspend 펑션 사용했었기 때문.
+            _pokemonList.value = repository.getAllPokemon()
+        }
     }
 }
+
 
